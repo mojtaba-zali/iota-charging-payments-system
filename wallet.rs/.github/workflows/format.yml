@@ -1,0 +1,69 @@
+name: Format
+
+on:
+  push:
+    branches:
+      - production
+  pull_request:
+    branches:
+      - production
+      - dev
+    paths-ignore:
+      - 'specs/**'
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rustfmt with nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+
+      - name: Install cargo-license-template
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --force cargo-license-template
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run cargo-license-template
+        uses: actions-rs/cargo@v1
+        with:
+          command: license-template
+          args: --template .license_template
+
+      - name: nodejs binding fmt check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path ./bindings/nodejs/Cargo.toml --all -- --check
+
+      - name: Run cargo-license-template for nodejs bindings
+        uses: actions-rs/cargo@v1
+        with:
+          command: license-template
+          args: --manifest-path ./bindings/nodejs/Cargo.toml --template .license_template
+
+      - name: python binding fmt check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path ./bindings/python/native/Cargo.toml --all -- --check
+
+      - name: Run cargo-license-template for python bindings
+        uses: actions-rs/cargo@v1
+        with:
+          command: license-template
+          args: --manifest-path ./bindings/python/native/Cargo.toml --template .license_template
